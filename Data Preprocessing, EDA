@@ -1,5 +1,5 @@
 # Data
-```{r}
+
 Statcast2015 <- read_csv("Downloads/Statcast2015.csv")
 Statcast2016 <- read_csv("Downloads/Statcast2016.csv")
 Statcast2017 <- read_csv("Downloads/Statcast2017.csv")
@@ -8,10 +8,8 @@ Statcast2019 <- read_csv("Downloads/Statcast2019.csv")
 
 sctot <- rbind(Statcast2015, Statcast2016, Statcast2017, Statcast2018, Statcast2019)
 
-```
-
 ## EDA - pitches
-```{r}
+
 sctot <- sctot %>%
   mutate(Swing = as.factor(ifelse(description %in%
                           c("foul", "foul_bunt", "foul_pitchout",
@@ -39,10 +37,8 @@ sctot <- sctot %>%
 sctot$Str <- as.factor(sctot$Str)
 
 sctot$barrel <- ifelse(sctot$launch_speed_angle == 6, 1, 0)
-```
 
 ## Creating regressed statistics
-```{r}
 
 # Regressed xwOBAcon
 
@@ -121,10 +117,9 @@ sctot %>%
 sctot %>%
   left_join(fb_velos, by=c("pitcher", "game_year")) %>%
   mutate(diff_fb = release_speed - fb_velo) -> sctot
-```
 
 ## EDA - pitches
-```{r}
+
 library(tidyverse)
 
 fb <- c("FF", "FT", "FA", "SI")
