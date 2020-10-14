@@ -98,3 +98,74 @@ fp2 %>%
   select(-as) %>%
   filter(swings >= 40) %>%
   arrange(desc(xWhiff)) -> xWhiff_total
+  
+  
+#### Repeating same process for 2018 stats
+  
+pitches_2018$pitcher_name <- sapply(pitches_2018$pitcher, playername_lookup_adj)
+
+pitches_2018_2 <- pitch_score2(pitches_2018)
+pitches_2018_2 %>% group_by(p_throws, pitch_type) %>% summarize(mps = mean(pitch_score)) -> mean_scores_2
+pitches_2018_2 %>% left_join(mean_scores_2, by=c("p_throws", "pitch_type")) %>% mutate(adj_score = pitch_score - mps) -> pitches_2018_2
+
+pitches_2018_2 %>%
+  group_by(pitcher_name) %>%
+  summarize(total_pitches = n()) %>%
+  filter(total_pitches >= 486) -> qualified_pitchers_2018
+
+pitches_2018_2 %>%
+  group_by(pitcher_name, pitch_type) %>%
+  summarize(ps18 = mean(adj_score)*100,
+            n = n()) %>%
+  arrange(desc(ps18)) -> pitch_scores_mean_2018
+
+pitches_2018_2 %>%
+  group_by(pitcher_name, pitch_type) %>%
+  summarize(ps18 = sum(adj_score),
+            n = n()) %>%
+  arrange(desc(ps18)) -> pitch_scores_sum_2018
+
+pitch_scores_mean_2018 %>%
+  filter(pitcher_name %in% qualified_pitchers_2018$pitcher_name) %>%
+  left_join(qualified_pitchers_2018, by="pitcher_name") %>%
+  mutate(usage_pct = n / total_pitches) %>%
+  filter(usage_pct >= 0.05) -> pitch_scores_mean_2018
+
+pitch_scores_sum_2018 %>%
+  filter(pitcher_name %in% qualified_pitchers_2018$pitcher_name) %>%
+  left_join(qualified_pitchers_2018, by="pitcher_name") %>%
+  mutate(usage_pct = n / total_pitches) %>%
+  filter(usage_pct >= 0.05) -> pitch_scores_sum_2018
+
+pitches_2018_2 %>%
+  group_by(pitcher_name) %>%
+  summarize(as18 = sum(adj_score),
+            n = n()) %>%
+  filter(n >= 486) %>%
+  arrange(desc(as18)) -> arsenal_scores_2018
+
+pitches_2018_2 %>%
+  group_by(pitcher_name, pitch_type) %>%
+  filter(Swing == 1) %>%
+  summarize(xWhiff18 = sum(whiffprob)/n(),
+            Whiff18 = sum(Miss == 1)/n(),
+            diff18 = Whiff18 - xWhiff18,
+            swings18 = n()) %>%
+  left_join(pitch_scores_mean_2018, by=c("pitcher_name", "pitch_type")) %>%
+  filter(pitcher_name %in% qualified_pitchers_2018$pitcher_name, usage_pct >= 0.05) %>%
+  select(-ps18) %>%
+  filter(swings18 >= 40) %>%
+  arrange(desc(xWhiff18)) -> xWhiffs_pitches_2018
+
+pitches_2018_2 %>%
+  group_by(pitcher_name) %>%
+  filter(Swing == 1) %>%
+  summarize(xWhiff18 = sum(whiffprob)/n(),
+            Whiff18 = sum(Miss == 1)/n(),
+            diff18 = Whiff18 - xWhiff18,
+            swings18 = n()) %>%
+  left_join(arsenal_scores_2018, by="pitcher_name") %>%
+  filter(pitcher_name %in% qualified_pitchers_2018$pitcher_name) %>%
+  select(-as18) %>%
+  filter(swings18 >= 40) %>%
+  arrange(desc(xWhiff18)) -> xWhiff_total_2018
